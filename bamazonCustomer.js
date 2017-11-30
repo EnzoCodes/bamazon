@@ -62,30 +62,25 @@ function selectItem(){
                 }
             }
         }]).then(function(data) {
-            // var id = parseFloat(data.chosenID);
-            // var amnt = parseFloat(data.chosenAmount);
-            // var id = answer.chosenID;
-            // var amnt = answer.chosenAmount;
-            connection.query(
-                "SELECT * FROM products WHERE item_id = '"+data.chosenID+"'",
-                    function(err, results, fields) {
+            var queryOne = "SELECT * FROM products WHERE item_id = ?"
+            connection.query(queryOne, [data.chosenID], function(err, results, fields) {
                         if(err){
                             throw err;
                         } else if (!err){
                             if (JSON.parse(data.chosenAmount) <= results[0].stock_quantity) {
-                                console.log("\n You bought: "+data.product_name);
+                                console.log("You bought: "+ results[0].product_name);
                                 var total = data.chosenAmount * results[0].price;
                                 console.log("Your total is $"+total);
 
                                 var sqlVal = "UPDATE products SET stock_quantity = '"
                                             + (results[0].stock_quantity - JSON.parse(data.chosenAmount))
                                             + "' WHERE item_id= '" + data.chosenID + "'";
-
                                 connection.query(sqlVal, function(err, result){
                                     if(err){
                                         throw err;
                                     }else if(!err){
                                         console.log("\nInventory updated!");
+                                        contShopping();
                                     }
                                 });
 
@@ -96,23 +91,21 @@ function selectItem(){
                             }
                         }
                     });
-                        // console.log("Item: "+res[id].product_name);
-                        // console.log("Price: "+res[id].price);
-                        // console.log("In-Stock: "+res[id].stock_quantity);
-            // if res[answer.chosenID].stock_quantity < answer.chosenAmount....
-        });
+            });
 };
 
 
-// function contShopping(){
-//
-// }
-
-// then.
-//  Check if 'bamazon' has product amount to meet ORDER
-//
-// If not, 'Insufficient quantity!', and break/restart
-//
-// ELSE, fulfill the customer's order.
-// Updating SQL database to reflect the remaining quantity.
-// Show the customer the total cost of their purchase.
+function contShopping(){
+    inquirer.prompt({
+        type: "confirm",
+        name: "reset",
+        message: "Would you like to continue shopping?"
+    }).then(function(answer){
+        if (answer.reset){
+            selectItem();
+        } else {
+            console.log("Thank you for shopping at Bamazon!");
+            connection.end();
+        }
+    });
+}
